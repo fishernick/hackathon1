@@ -1,0 +1,7 @@
+<script>start("/Users/carsonchan/Documents/HackathonProject/hackathon1/source/");</script>
+<script>onHasParentDirectory();</script>
+<script>addRow("bin","bin",1,384,"384 B",1758405931,"9/20/25, 6:05:31 PM");</script>
+<script>addRow("include","include",1,96,"96 B",1758405924,"9/20/25, 6:05:24 PM");</script>
+<script>addRow("lib","lib",1,96,"96 B",1758406036,"9/20/25, 6:07:16 PM");</script>
+<script>addRow(".gitignore",".gitignore",0,69,"69 B",1758405919,"9/20/25, 6:05:19 PM");</script>
+<script>addRow("pyvenv.cfg","pyvenv.cfg",0,331,"331 B",1758405919,"9/20/25, 6:05:19 PM");</script>
