@@ -72,19 +72,19 @@ vectorizer = joblib.load('vectorizer.joblib')
 # === Ask user for food preference ===
 print("What cuisine are you in the mood for? (e.g. American, Korean, Mexican, etc.)")
 
-country_list = [British, French, Italian, Spanish, German, Belgian, Dutch, African, Indian, Korean, Japanese, Chinese, Thai, Vietnamese, American, Mexican]
+country_list = [
+    'british', 'french', 'italian', 'spanish', 'german', 'belgian', 'dutch',
+    'african', 'indian', 'korean', 'japanese', 'chinese', 'thai',
+    'vietnamese', 'american', 'mexican'
+]
 
 while True:
     user_cuisine = input("Your choice: ").strip().lower()
-  
-    if (user_cuisine in country_list):
-        free = 'true'
-    else:
-        free = 'false'
-        print("I cannot understand, please re-enter")
-
-    if free == 'true':
+    if user_cuisine in country_list:
         break
+    else:
+        print("I cannot understand, please re-enter.")
+
 
 
 # === Setup dining courts and headers ===
