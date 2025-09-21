@@ -1,7 +1,0 @@
-beautifulsoup4
-requests
-pandas
-folium
-geopy
-urllib3
-certifi
