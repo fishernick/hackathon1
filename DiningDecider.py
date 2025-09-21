@@ -8,11 +8,14 @@ import joblib
 
 # for web scraping
 import requests
+from playwright.sync_api import sync_playwright
+from datetime import datetime
 from bs4 import BeautifulSoup
 from datetime import datetime
 from collections import defaultdict
 import ssl
 import certifi
+
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 # load data
@@ -30,11 +33,13 @@ dish = food_dataset['recipe_name']
 origin = food_dataset['cuisine']
 
 # split dataset (train + validation + test)
-dish_train, dish_temp, origin_train, origin_temp = train_test_split(dish, origin, test_size=0.3, random_state=25, stratify=origin)
-dish_val, dish_test, origin_val, origin_test = train_test_split(dish_temp, origin_temp, test_size=0.5, random_state=25, stratify=None)
+dish_train, dish_temp, origin_train, origin_temp = train_test_split(dish, origin, test_size=0.3, random_state=25,
+                                                                    stratify=origin)
+dish_val, dish_test, origin_val, origin_test = train_test_split(dish_temp, origin_temp, test_size=0.5, random_state=25,
+                                                                stratify=None)
 
 # vectorize
-vectorizer = TfidfVectorizer(ngram_range=(1,2), stop_words='english')
+vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words='english')
 dish_train_vec = vectorizer.fit_transform(dish_train)
 
 # transform validation and test sets
@@ -74,36 +79,51 @@ year, month, day = today.year, today.month, today.day
 meal = "Dinner"
 
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/5",
-    "host":	"dining.purdue.edu",
-    "connection":	"keep-alive",
-    "sec-ch-ua-platform":	"\"Windows\"",
-    "k":	"application/json; charset=UTF-8",
-    "sec-ch-ua":	"\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"",
-    "content-type":	"text/plain;charset=UTF-8",
-    "sec-ch-ua-mobile":	"?0",
-    "accept":	"*/*",
-    "origin":"https://dining.purdue.edu",
-    "sec-fetch-site":"same-origin",
-    "sec-fetch-mode":"cors",
-    "sec-fetch-dest":"empty",
-    "referer":"https://dining.purdue.edu/menus/",
-    "accept-encoding":	"gzip",
-    "accept-language":	"en-US,en;q=0.9"
-    }
+
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.5999.115 Safari/537.36",
+  "host": "dining.purdue.edu",
+  "connection": "keep-alive",
+  "accept": "application/json, text/javascript, */*; q=0.01",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "accept-language": "en-US,en;q=0.9",
+  "origin": "https://dining.purdue.edu",
+  "referer": "https://dining.purdue.edu/menus/",
+  "sec-ch-ua": "\"Google Chrome\";v=\"140\", \"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\"",
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": "\"Windows\"",
+  "sec-fetch-dest": "empty",
+  "sec-fetch-mode": "cors",
+  "sec-fetch-site": "same-origin",
+  "x-requested-with": "XMLHttpRequest",
+  "content-type": "application/json;charset=UTF-8"
+}
+
 
 # === Step 4: Functions to scrape dishes ===
 def get_dish_links(dining_court):
-    url = f"https://dining.purdue.edu/menus/{dining_court}/{year}/{month}/{day}/{meal}"
-    try:
-        res = requests.get(url, headers=headers, verify=certifi.where())
-        res.raise_for_status()
-        soup = BeautifulSoup(res.text, "html.parser")
-        item_links = soup.select('a[href^="/menus/item/"]')
-        return ["https://dining.purdue.edu" + a['href'] for a in item_links]
-    except Exception as e:
-        print(f"Error loading menu for {dining_court}: {e}")
-        return []
+    dining_courts = ["Earhart", "Ford", "Hillenbrand", "Wiley", "Windsor"]
+    today = datetime.today()
+    year, month, day = today.year, today.month, today.day
+    meal = "Dinner"
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+
+        for court in dining_courts:
+            url = f"https://dining.purdue.edu/menus/{court}/{year}/{month}/{day}"
+            print(f"\nLoading {url} ...")
+            page.goto(url)
+            page.wait_for_selector(".station-item")  # wait for React content
+
+            # Extract dish names
+            dishes = page.locator(".station-item").all_inner_texts()
+            print(f"{court} has {len(dishes)} dishes:")
+            for d in dishes:
+                print("  •", d.strip())
+
+        browser.close()
+
 
 def get_dish_name_from_item_page(item_url):
     try:
@@ -115,12 +135,13 @@ def get_dish_name_from_item_page(item_url):
     except:
         return None
 
+
 # === Step 5: Scrape all menus and classify ===
 court_dishes = defaultdict(list)
 
 for court in dining_courts:
     print(f"\n Scraping menu: {court} ({meal})")
-    
+
     item_links = get_dish_links(court)
     print(f"   Found {len(item_links)} dish item links.")
 
@@ -129,10 +150,10 @@ for court in dining_courts:
         continue
 
     for idx, link in enumerate(item_links):
-        print(f"     ({idx+1}/{len(item_links)}) Fetching item page: {link}")
-        
+        print(f"     ({idx + 1}/{len(item_links)}) Fetching item page: {link}")
+
         dish_name = get_dish_name_from_item_page(link)
-        
+
         if dish_name:
             print(f"        Got dish name: {dish_name}")
             # Predict cuisine
@@ -142,7 +163,6 @@ for court in dining_courts:
             court_dishes[court].append((dish_name, predicted_cuisine))
         else:
             print(f"        Failed to extract dish name from: {link}")
-
 
 # === Step 6: Score each dining court ===
 court_scores = {
