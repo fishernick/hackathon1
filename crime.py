@@ -7,6 +7,8 @@ import folium
 from geopy.geocoders import Nominatim
 from geopy.distance import geodesic
 import geocoder
+import os
+import webbrowser
 
 # 1. Get all weekly log links from archive
 def get_archive_links():
@@ -193,7 +195,10 @@ if archive_links:
                     # Display table and map
                     display(df_near)
                     map_viz = plot_incidents_map(nearby, center_coord=user_location)
-                    map_viz
+                    map_viz.save("crime_map.html")
+                    file_path = os.path.abspath("crime_map.html")
+                    webbrowser.open(f"file://{file_path}")
+                    
 else:
     print("No archive links found. Check that the archive_links list was populated.")
 
