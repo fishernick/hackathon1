@@ -164,7 +164,7 @@ for court in classified_predictions:
                     scores['WILEY'] += 1
                 case 4:
                     scores['WINDSOR'] += 1
-      diner += 1
+    diner += 1
 
 greatest_score_name = max(scores, key=scores.get)
 print(f"The best dining court is {greatest_score_name}")
