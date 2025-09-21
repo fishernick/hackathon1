@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_6e0d05d2467967a45bee377d0ab47ecb {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_6e0d05d2467967a45bee377d0ab47ecb" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_6e0d05d2467967a45bee377d0ab47ecb = L.map(
+                "map_6e0d05d2467967a45bee377d0ab47ecb",
+                {
+                    center: [40.423, -86.921],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 15,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_076e06e5578b818c69c6ab5eb3108a53 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_076e06e5578b818c69c6ab5eb3108a53.addTo(map_6e0d05d2467967a45bee377d0ab47ecb);
+        
+    
+            var marker_c1e0bb4968338c7eae5474c77e629df3 = L.marker(
+                [40.4258029, -86.9152051],
+                {
+}
+            ).addTo(map_6e0d05d2467967a45bee377d0ab47ecb);
+        
+    
+            var icon_0592b6c91b78b441ce863bdc00922502 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_5a2a22b9df65ed4393c51548f13b8510 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_515582b5584d6f1b6d08273d0c37dfbe = $(`<div id="html_515582b5584d6f1b6d08273d0c37dfbe" style="width: 100.0%; height: 100.0%;">Theft at Schleman Hall, 9/18/25 8:30 AM</div>`)[0];
+                popup_5a2a22b9df65ed4393c51548f13b8510.setContent(html_515582b5584d6f1b6d08273d0c37dfbe);
+            
+        
+
+        marker_c1e0bb4968338c7eae5474c77e629df3.bindPopup(popup_5a2a22b9df65ed4393c51548f13b8510)
+        ;
+
+        
+    
+    
+                marker_c1e0bb4968338c7eae5474c77e629df3.setIcon(icon_0592b6c91b78b441ce863bdc00922502);
+            
+    
+            var marker_e7380c6b90b2e7b30fd0021636c6e253 = L.marker(
+                [40.427428, -86.9176112],
+                {
+}
+            ).addTo(map_6e0d05d2467967a45bee377d0ab47ecb);
+        
+    
+            var icon_7fcd95add3cc8f4149f9c8f72d0ec5a0 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_a692cf2b26f8b38aedf8827aaae5a07b = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_71ea8f2add5f7de4a22fe7a1b26c895c = $(`<div id="html_71ea8f2add5f7de4a22fe7a1b26c895c" style="width: 100.0%; height: 100.0%;">False Informing at Alpha Tau Omega, 9/19/25 12:13 AM</div>`)[0];
+                popup_a692cf2b26f8b38aedf8827aaae5a07b.setContent(html_71ea8f2add5f7de4a22fe7a1b26c895c);
+            
+        
+
+        marker_e7380c6b90b2e7b30fd0021636c6e253.bindPopup(popup_a692cf2b26f8b38aedf8827aaae5a07b)
+        ;
+
+        
+    
+    
+                marker_e7380c6b90b2e7b30fd0021636c6e253.setIcon(icon_7fcd95add3cc8f4149f9c8f72d0ec5a0);
+            
+    
+            var marker_31a59c69d798c4a66f938b15efae30b9 = L.marker(
+                [40.4268224, -86.9249644],
+                {
+}
+            ).addTo(map_6e0d05d2467967a45bee377d0ab47ecb);
+        
+    
+            var icon_fc693ac38b95640cd743e48e0e0480b2 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_5cdfdcd2802215d4417caa2ae6e46998 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_9616f3333179fe6f0b550d70f12c8f8f = $(`<div id="html_9616f3333179fe6f0b550d70f12c8f8f" style="width: 100.0%; height: 100.0%;">Drug Law Violations at Shreve Hall, 9/19/25 12:27 AM</div>`)[0];
+                popup_5cdfdcd2802215d4417caa2ae6e46998.setContent(html_9616f3333179fe6f0b550d70f12c8f8f);
+            
+        
+
+        marker_31a59c69d798c4a66f938b15efae30b9.bindPopup(popup_5cdfdcd2802215d4417caa2ae6e46998)
+        ;
+
+        
+    
+    
+                marker_31a59c69d798c4a66f938b15efae30b9.setIcon(icon_fc693ac38b95640cd743e48e0e0480b2);
+            
+    
+            var marker_964b99f584a48c6b77818851bf7aedef = L.marker(
+                [40.4263189, -86.9233062],
+                {
+}
+            ).addTo(map_6e0d05d2467967a45bee377d0ab47ecb);
+        
+    
+            var icon_da79373bbbcbe789c82ba21914a9dcb8 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ef1ab0f3d92283eac21f1e8adadd85a6 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_960ac33f9767e5ff6cc93a5f0ee18d6c = $(`<div id="html_960ac33f9767e5ff6cc93a5f0ee18d6c" style="width: 100.0%; height: 100.0%;">Harassment at Meredith Hall, 9/17/25 7:26 PM</div>`)[0];
+                popup_ef1ab0f3d92283eac21f1e8adadd85a6.setContent(html_960ac33f9767e5ff6cc93a5f0ee18d6c);
+            
+        
+
+        marker_964b99f584a48c6b77818851bf7aedef.bindPopup(popup_ef1ab0f3d92283eac21f1e8adadd85a6)
+        ;
+
+        
+    
+    
+                marker_964b99f584a48c6b77818851bf7aedef.setIcon(icon_da79373bbbcbe789c82ba21914a9dcb8);
+            
+    
+            var marker_dc0ef65578f2f477e28a9f97c4871446 = L.marker(
+                [40.4275497, -86.9102786],
+                {
+}
+            ).addTo(map_6e0d05d2467967a45bee377d0ab47ecb);
+        
+    
+            var icon_326358897d28567ef4fe1d9f3965f25b = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_83174a368a62ffefa538041d051c523f = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_8050a97c517d151ed6e5aeed47e3cf1a = $(`<div id="html_8050a97c517d151ed6e5aeed47e3cf1a" style="width: 100.0%; height: 100.0%;">Minor Consumption at Northwestern Ave/N Grant St, 9/18/25 12:42 AM</div>`)[0];
+                popup_83174a368a62ffefa538041d051c523f.setContent(html_8050a97c517d151ed6e5aeed47e3cf1a);
+            
+        
+
+        marker_dc0ef65578f2f477e28a9f97c4871446.bindPopup(popup_83174a368a62ffefa538041d051c523f)
+        ;
+
+        
+    
+    
+                marker_dc0ef65578f2f477e28a9f97c4871446.setIcon(icon_326358897d28567ef4fe1d9f3965f25b);
+            
+</script>
+</html>

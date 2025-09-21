@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PurdueAI - Campus Assistant</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-container {
+      background: white;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      background: #000;
+      color: #CFB991;
+      padding: 12px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .chat-header h1 {
+      font-size: 18px;
+      margin-bottom: 3px;
+    }
+
+    .chat-header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      background: #f8f9fa;
+      font-size: 13px;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      display: flex;
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message-content {
+      max-width: 75%;
+      padding: 8px 12px;
+      border-radius: 14px;
+      line-height: 1.4;
+    }
+
+    .message.user .message-content {
+      background: #000;
+      color: #CFB991;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.bot .message-content {
+      background: #fff;
+      color: #000;
+      border: 1px solid #CFB991;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message.bot .message-content::before {
+      content: "🚂 ";
+    }
+
+    .chat-input-container {
+      padding: 10px;
+      border-top: 1px solid #ddd;
+      background: white;
+      flex-shrink: 0;
+    }
+
+    .chat-input-form {
+      display: flex;
+      gap: 6px;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .chat-input:focus {
+      border-color: #CFB991;
+    }
+
+    .send-button {
+      background: #000;
+      color: #CFB991;
+      border: 1px solid #CFB991;
+      padding: 8px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+
+    .send-button:hover {
+      background: #CFB991;
+      color: #000;
+    }
+
+    .typing-indicator {
+      display: none;
+      font-style: italic;
+      color: #666;
+      font-size: 12px;
+      margin: 5px 0;
+    }
+
+    .welcome-message {
+      text-align: center;
+      color: #CFB991;
+      font-style: italic;
+      margin-top: 20px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h1>PurdueAI</h1>
+      <p>Your Campus Assistant</p>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="welcome-message">Welcome to PurdueAI! Ask me anything about Purdue University.</div>
+    </div>
+
+    <div class="chat-input-container">
+      <form class="chat-input-form" id="chatForm">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Type your question..." autocomplete="off">
+        <button type="submit" class="send-button" id="sendButton">Send</button>
+      </form>
+      <div class="typing-indicator" id="typingIndicator">PurdueAI is typing...</div>
+    </div>
+  </div>
+
+  <script>
+    class PurdueAIChat {
+      constructor() {
+        this.chatMessages = document.getElementById('chatMessages');
+        this.chatForm = document.getElementById('chatForm');
+        this.chatInput = document.getElementById('chatInput');
+        this.sendButton = document.getElementById('sendButton');
+        this.typingIndicator = document.getElementById('typingIndicator');
+
+        this.setupEventListeners();
+      }
+
+      setupEventListeners() {
+        this.chatForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.sendMessage();
+        });
+      }
+
+      async sendMessage() {
+        const message = this.chatInput.value.trim();
+        if (!message) return;
+
+        this.addMessage(message, 'user');
+        this.chatInput.value = '';
+        this.setLoading(true);
+
+        try {
+          const response = await this.callPurdueAI(message);
+          this.addMessage(response, 'bot');
+        } catch (error) {
+          console.error(error);
+          this.addMessage("Sorry, I couldn't reach PurdueAI.", 'bot');
+        } finally {
+          this.setLoading(false);
+        }
+      }
+
+      async callPurdueAI(message) {
+        // Simulated backend call
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+
+        if (!res.ok) throw new Error('Network error');
+        const data = await res.json();
+        return data.response;
+      }
+
+      addMessage(content, sender) {
+        const div = document.createElement('div');
+        div.className = `message ${sender}`;
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.innerHTML = this.convertMarkdown(content);
+
+        div.appendChild(contentDiv);
+        this.chatMessages.appendChild(div);
+
+        const welcome = this.chatMessages.querySelector('.welcome-message');
+        if (welcome) welcome.remove();
+
+        this.scrollToBottom();
+      }
+
+      setLoading(loading) {
+        this.sendButton.disabled = loading;
+        this.typingIndicator.style.display = loading ? 'block' : 'none';
+        if (loading) this.scrollToBottom();
+      }
+
+      scrollToBottom() {
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+      }
+
+      convertMarkdown(text) {
+        let html = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+        return html;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      window.purdueAI = new PurdueAIChat();
+    });
+  </script>
+</body>
+</html>
