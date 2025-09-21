@@ -15,6 +15,7 @@ from datetime import datetime
 from collections import defaultdict
 import ssl
 import certifi
+from country_named_entity_recognition import find_countries
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
@@ -70,7 +71,21 @@ vectorizer = joblib.load('vectorizer.joblib')
 
 # === Ask user for food preference ===
 print("What cuisine are you in the mood for? (e.g. American, Korean, Mexican, etc.)")
-user_cuisine = input("Your choice: ").strip().lower()
+
+country_list = [British, French, Italian, Spanish, German, Belgian, Dutch, African, Indian, Korean, Japanese, Chinese, Thai, Vietnamese, American, Mexican]
+
+while True:
+    user_cuisine = input("Your choice: ").strip().lower()
+  
+    if (user_cuisine in country_list):
+        free = 'true'
+    else:
+        free = 'false'
+        print("I cannot understand, please re-enter")
+
+    if free == 'true':
+        break
+
 
 # === Setup dining courts and headers ===
 dining_courts = ["Earhart", "Ford", "Hillenbrand", "Wiley", "Windsor"]
