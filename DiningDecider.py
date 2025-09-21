@@ -7,6 +7,8 @@ from sklearn.metrics import classification_report
 import joblib
 
 # for web scraping
+import json
+import sys
 import requests
 from playwright.sync_api import sync_playwright
 from datetime import datetime
@@ -15,6 +17,7 @@ from datetime import datetime
 from collections import defaultdict
 import ssl
 import certifi
+from country_named_entity_recognition import find_countries
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
@@ -68,15 +71,29 @@ joblib.dump(vectorizer, 'vectorizer.joblib')
 clf = joblib.load('cuisine_model.joblib')
 vectorizer = joblib.load('vectorizer.joblib')
 
-# === Step 2: Ask user for food preference ===
+# === Ask user for food preference ===
 print("What cuisine are you in the mood for? (e.g. American, Korean, Mexican, etc.)")
-user_cuisine = input("Your choice: ").strip().lower()
 
-# === Step 3: Setup dining courts and headers ===
+country_list = ["British", "French", "Italian", "Spanish", "German", "Belgian", "Dutch", "Indian", "Korean", "Japanese", "Chinese", "Thai", "Vietnamese", "American", "Mexican" ]
+
+try:
+        # Get input from command line argument
+    if len(sys.argv) > 1:
+        user_input = json.loads(sys.argv[1])
+    else:
+        user_input = {}
+        
+        # Process the input and generate your string response
+    user_cuisine=json.dumps(user_input).strip().lower()[11:16]
+except Exception as e:
+    print(f"Error: {str(e)}")
+    sys.exit(1)
+        
+
+# === Setup dining courts and headers ===
 dining_courts = ["Earhart", "Ford", "Hillenbrand", "Wiley", "Windsor"]
 today = datetime.today()
 year, month, day = today.year, today.month, today.day
-meal = "Dinner"
 
 headers = {
 
@@ -98,85 +115,78 @@ headers = {
   "content-type": "application/json;charset=UTF-8"
 }
 
+dishes_list = [[], [], [], [], []]
 
-# === Step 4: Functions to scrape dishes ===
-def get_dish_links(dining_court):
-    dining_courts = ["Earhart", "Ford", "Hillenbrand", "Wiley", "Windsor"]
-    today = datetime.today()
-    year, month, day = today.year, today.month, today.day
-    meal = "Dinner"
+# === Scrape dishes ===
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+today = datetime.today()
+year, month, day = today.year, today.month, today.day
 
-        for court in dining_courts:
-            url = f"https://dining.purdue.edu/menus/{court}/{year}/{month}/{day}"
-            print(f"\nLoading {url} ...")
-            page.goto(url)
-            page.wait_for_selector(".station-item")  # wait for React content
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page()
+    index = 0
 
-            # Extract dish names
-            dishes = page.locator(".station-item").all_inner_texts()
-            print(f"{court} has {len(dishes)} dishes:")
-            for d in dishes:
-                print("  •", d.strip())
+    for court in dining_courts:
+        url = f"https://dining.purdue.edu/menus/{court}/{year}/{month}/{day}"
+        print(f"\nLoading {url} ...")
+        page.goto(url)
+        page.wait_for_selector(".station-item")  # wait for React content
 
-        browser.close()
+        # Extract dish names
+        dishes = page.locator(".station-item").all_inner_texts()
+        print(f"{court} has {len(dishes)} dishes:")
+        for d in dishes:
+            # print("  •", d.strip())
+            dishes_list[index].append(d)
+        index += 1
 
+    browser.close()
 
-def get_dish_name_from_item_page(item_url):
-    try:
-        res = requests.get(item_url, headers=headers, verify=certifi.where())
-        res.raise_for_status()
-        soup = BeautifulSoup(res.text, "html.parser")
-        name_tag = soup.find("span", class_="item-widget-name__name")
-        return name_tag.get_text(strip=True) if name_tag else None
-    except:
-        return None
+# === Predict genre of each dish ===
 
+classified_predictions = []
 
-# === Step 5: Scrape all menus and classify ===
-court_dishes = defaultdict(list)
+for court_dishes in dishes_list:
+    court_predictions = []
+    for dish in court_dishes:
+        dish_vec = vectorizer.transform([dish])
+        predicted_cuisine = clf.predict(dish_vec)[0].lower()
+        court_predictions.append(predicted_cuisine)
+    classified_predictions.append(court_predictions)
 
-for court in dining_courts:
-    print(f"\n Scraping menu: {court} ({meal})")
+    
+# === Score each dining court ===
 
-    item_links = get_dish_links(court)
-    print(f"   Found {len(item_links)} dish item links.")
-
-    if not item_links:
-        print(f"   No item links found for {court}. Skipping.")
-        continue
-
-    for idx, link in enumerate(item_links):
-        print(f"     ({idx + 1}/{len(item_links)}) Fetching item page: {link}")
-
-        dish_name = get_dish_name_from_item_page(link)
-
-        if dish_name:
-            print(f"        Got dish name: {dish_name}")
-            # Predict cuisine
-            vec = vectorizer.transform([dish_name])
-            predicted_cuisine = model.predict(vec)[0].lower()
-            print(f"        Predicted cuisine: {predicted_cuisine}")
-            court_dishes[court].append((dish_name, predicted_cuisine))
-        else:
-            print(f"        Failed to extract dish name from: {link}")
-
-# === Step 6: Score each dining court ===
-court_scores = {
-    court: sum(1 for _, cuisine in dishes if cuisine == user_cuisine)
-    for court, dishes in court_dishes.items()
+scores = {
+    'EARHART': 0,
+    'FORD': 0,
+    'HILLENBRAND': 0,
+    'WILEY': 0,
+    'WINDSOR': 0
 }
 
-# === Step 7: Recommend dining court ===
-if any(score > 0 for score in court_scores.values()):
-    best_court = max(court_scores, key=court_scores.get)
-    print(f"\nBest match: {best_court} Dining Court")
-    print(f"Matching {user_cuisine.title()} dishes there:")
-    for dish_name, cuisine in court_dishes[best_court]:
-        if cuisine == user_cuisine:
-            print(f"  • {dish_name}")
-else:
-    print("\n⚠️ Sorry, none of the dining courts are serving your preferred cuisine right now.")
+diner = 0
+
+for court in classified_predictions:
+    for genre in court:
+        if (genre.lower() == user_cuisine.lower()):
+            match diner:
+                case 0:
+                    scores['EARHART'] += 1
+                case 1:
+                    scores['FORD'] += 1
+                case 2:
+                    scores['HILLENBRAND'] += 1
+                case 3:
+                    scores['WILEY'] += 1
+                case 4:
+                    scores['WINDSOR'] += 1
+    diner += 1
+
+greatest_score_name = max(scores, key=scores.get)
+print(f"The best dining court is {greatest_score_name}")
+        
+
+  
+    
