@@ -55,12 +55,12 @@ clf.fit(dish_train_vec, origin_train)
 
 # evaluate validation set
 origin_val_pred = clf.predict(dish_val_vec)
-print("Validation set results:")
+#print("Validation set results:")
 print(classification_report(origin_val, origin_val_pred))
 
 # evaluate test set
 origin_test_pred = clf.predict(dish_test_vec)
-print("Test set results:")
+#print("Test set results:")
 print(classification_report(origin_test, origin_test_pred))
 
 # save model and vectorizer
@@ -84,7 +84,7 @@ try:
         user_input = {}
         
         # Process the input and generate your string response
-    user_cuisine=json.dumps(user_input).strip().lower()[11:16]
+    user_cuisine=json.dumps(user_input).strip().lower()[11:len(json.dumps(user_input))-2]
 except Exception as e:
     print(f"Error: {str(e)}")
     sys.exit(1)

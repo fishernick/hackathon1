@@ -3,7 +3,7 @@ const app = express();
 const PORT = 25480;
 const path = require("path");
 const puppeteer = require('puppeteer');
-const { exec } = require("child_process");
+const { exec, execFile } = require("child_process");
 const TARGET = 'https://purdue.brightspace.com'; 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -271,22 +271,23 @@ app.post('/cleanup-session/:sessionId', async (req, res) => {
 app.post('/food', async (req, res) => {
   const userInput = req.body;
   
-  // Pass input as command line argument
-  const inputArgs = JSON.stringify(userInput).replace(/"/g, '\\"');
-  
-  exec(`python3 /Users/nick/Documents/hacky/DiningDecider.py "${inputArgs}"`, (error, stdout, stderr) => {
+  // Pass input as command line argument using execFile to avoid shell escaping issues on Windows
+  const inputArg = JSON.stringify(userInput);
+
+  // Use the 'py' launcher on Windows to run the script; pass the JSON as a single argument
+  execFile('py', ['C:\\Users\\Nick Fisher\\Desktop\\hacky\\DiningDecider.py', inputArg], (error, stdout, stderr) => {
     if (error) {
       console.error(`Error: ${error}`);
       return res.status(500).json({ error: 'Script execution failed' });
     }
-    
+
     if (stderr) {
       console.error(`Python stderr: ${stderr}`);
     }
-    
+
     // stdout contains your string - just trim whitespace
     const result = stdout.trim();
-    
+
     res.json({ 
       success: true, 
       message: result,
