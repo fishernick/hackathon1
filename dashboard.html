@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boilerplate</title>
+    <style>
+    * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Reduce padding/margins globally */
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Dark mode variables and styles */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-muted: #888;
+            --border-color: #e9ecef;
+            --accent-color: #CFB991;
+            --modal-bg: #fff;
+            --calendar-day-bg: #ffffff;
+            --calendar-day-hover: #f8f9fa;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --text-muted: #999999;
+            --border-color: #404040;
+            --accent-color: #CFB991;
+            --modal-bg: #2d2d2d;
+            --calendar-day-bg: #333333;
+            --calendar-day-hover: #404040;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Auth check loading screen */
+        .auth-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .auth-loading h2 {
+            color: #CFB991;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #CFB991;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Hide main content initially */
+        .main-content {
+            display: none;
+        }
+
+        .mood-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mood-prompt {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            opacity: 0;
+            animation: fadeInPrompt 0.8s ease-out 0.3s forwards;
+        }
+
+        .mood-input-container {
+            position: relative;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .mood-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 0.9rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            outline: none;
+            transform: translateX(-100%);
+            opacity: 0;
+            animation: slideInFromLeft 0.6s ease-out 0.6s forwards;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .mood-input:focus {
+            border-color: #CFB991;
+            box-shadow: 0 0 0 3px rgba(207, 185, 145, 0.2);
+        }
+/* Add this to your existing styles */
+.map-container {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.map-container:hover {
+    transform: scale(1.02);
+}
+
+.expand-hint {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.map-container:hover .expand-hint {
+    opacity: 1;
+}
+
+.map-modal {
+    display: none;
+    position: fixed;
+    z-index: 2001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    animation: fadeIn 0.3s ease;
+}
+
+.map-modal-content {
+    position: relative;
+    margin: auto;
+    padding: 20px;
+    width: 95%;
+    height: 95%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-modal-image {
+    max-width: 100%;
+    max-height: 90%;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.map-close {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2002;
+    transition: opacity 0.3s ease;
+}
+
+.map-close:hover {
+    opacity: 0.7;
+}
+
+.map-modal-title {
+    color: white;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    text-align: center;
+}
+        .mood-input::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        @keyframes fadeInPrompt {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInFromLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Hover effect for the container */
+        .mood-container:hover .mood-input {
+            border-color: #CFB991;
+        }
+        
+        /* Link styles */
+a {
+    color: #0066cc; /* Default blue for light mode */
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+[data-theme="dark"] a {
+    color: #CFB991;
+}
+
+[data-theme="dark"] a:hover {
+    color: #B8A47A; /* Slightly darker shade on hover */
+}
+
+/* If you want to style specific link classes differently */
+.portal-link {
+    color: #0066cc;
+    display: block;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    transition: background-color 0.2s ease, color 0.3s ease;
+}
+
+.portal-link:hover {
+    background: rgba(207, 185, 145, 0.1);
+    text-decoration: none;
+}
+
+[data-theme="dark"] .portal-link {
+    color: #CFB991;
+}
+
+[data-theme="dark"] .portal-link:hover {
+    background: rgba(207, 185, 145, 0.2);
+    color: #B8A47A;
+}
+        .greeting-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #CFB991;
+            color: #000;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-100%);
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+        }
+
+        .greeting-bar .greeting-title {
+            display: flex;
+            align-items: center;
+        }
+
+        .greeting-bar .greeting-title h1 {
+            font-size: 1.4rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .greeting-bar .greeting-title p {
+            margin: 0;
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: #333;
+            text-align: right;
+        }
+
+        /* Dark mode toggle button */
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #000;
+            margin-left: 10px;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .greeting-bar.slide-in {
+            transform: translateY(0);
+        }
+
+        .container {
+            max-width: 1900px;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+            overflow: hidden;
+            padding: 20px 10px 10px;
+            height: calc(100vh - 50px);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal {
+            background: var(--modal-bg);
+            border-radius: 8px;
+            padding: 20px;
+            width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal h2 {
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+        
+        .scrollable-dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding-right: 10px;
+            overflow-y: auto;
+        }
+
+        .info-box {
+            aspect-ratio: 1 / 1;
+            background: var(--bg-secondary);
+            border: 3px solid #CFB991;
+            border-radius: 25px;
+            padding: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-width: 0;
+            min-height: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .right-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .calendar-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            overflow-y: auto;
+        }   
+
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 60px;
+        }
+
+        .divider {
+            width: 2px;
+            background: linear-gradient(to bottom, transparent 20px, #CFB991 40px, #CFB991 calc(100% - 20px), transparent calc(100% - 20px));
+            margin: 0 10px;
+            min-height: calc(100vh - 140px);
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 60px;
+        }
+
+        .scrollable-dashboard::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollable-dashboard::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .scrollable-dashboard::-webkit-scrollbar-thumb {
+            background: #CFB991;
+            border-radius: 4px;
+        }
+
+        .info-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .info-box-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .info-box-content {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .info-box-meta {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .calendar-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #CFB991;
+        }
+
+        .calendar-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-button {
+            background: #CFB991;
+            color: #000;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+
+        
+        .nav-button:hover {
+            background: #B8A47A;
+        }
+
+        .calendar-day {
+            background: var(--calendar-day-bg);
+            border: 1px solid var(--border-color);
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .calendar-day:hover {
+            background: var(--calendar-day-hover);
+        }
+
+        .calendar-day.other-month {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+        }
+
+        .calendar-day.has-event {
+            background: #fff9e6;
+        }
+
+        [data-theme="dark"] .calendar-day.has-event {
+            background: #4a4a2a;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #CFB991;
+            background: #fffbf0;
+        }
+
+        [data-theme="dark"] .calendar-day.today {
+            background: #3a3a1a;
+        }
+
+        .day-number {
+            font-weight: 600;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+            color: var(--text-primary);
+        }
+
+        .calendar-day-header {
+            background: #CFB991;
+            color: #000;
+            padding: 8px;
+            height: 40px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .event-item {
+            font-size: 0.7rem;
+            background: #CFB991;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-bottom: 2px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            display: block;
+            text-decoration: none;
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+
+        .event-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .loading-indicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #CFB991;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: none;
+            z-index: 1001;
+        }
+
+        .error-message {
+            background: #ffe6e6;
+            border: 1px solid #ffcccc;
+            border-left: 4px solid #ff6666;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            color: #cc0000;
+        }
+
+        [data-theme="dark"] .error-message {
+            background: #4a1a1a;
+            border-color: #663333;
+            border-left-color: #cc6666;
+            color: #ff9999;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-box {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .divider {
+                width: 100%;
+                height: 2px;
+                background: linear-gradient(to right, transparent 40px, #CFB991 40px, #CFB991 calc(100% - 40px), transparent calc(100% - 40px));
+                margin: 20px 0;
+                min-height: auto;
+            }
+            
+            .left-panel, .right-panel {
+                padding-top: 20px;
+            }
+            
+            .scrollable-dashboard {
+                max-height: 400px;
+            }
+            
+            .calendar-container {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth check loading screen -->
+    <div class="auth-loading" id="authLoading">
+        <h2>Checking authentication...</h2>
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Main content (initially hidden) -->
+    <div class="main-content" id="mainContent">
+        <div class="modal-overlay" id="eventModal">
+            <div class="modal">
+                <button class="modal-close" onclick="closeModal()">✕</button>
+                <h2 id="modalTitle">Events</h2>
+                <div id="modalContent"></div>
+            </div>
+        </div>
+
+        <div class="greeting-bar" id="greetingBar">
+    <span id="greetingText" style="font-weight:bold;">Hello, Student!</span>
+    <div class="greeting-title">
+        <h1>Boilerplate</h1>
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+            ☾
+        </button>
+    </div>
+</div>
+
+        <div class="loading-indicator" id="loadingIndicator">Loading calendar</div>
+
+        <div class="container">
+            <div class="left-panel">
+                <div class="scrollable-dashboard">
+                    <div class="info-box-content">
+                        <iframe 
+                            src="/crime_map.html" 
+                            style="width:100%;height:320px;border:none;border-radius:6px;overflow:hidden;"
+                            title="Local Crime Map"
+                            loading="lazy"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+
+                    <div class="info-box">
+                        <h3 style="flex: 1; align-items: center">Useful Links</h3>
+                        <a href="https://purdue.brightspace.com/" class="portal-link">Brightspace</a>
+                        <a href="https://events.purdue.edu/#tabs-39368871964745-39368871977037" class="portal-link">Purdue Upcoming Events</a>
+                        <a href="https://experience.elluciancloud.com/mypurdue" target="_blank" class="portal-link">
+                            MyPurdue Portal
+                        </a>
+                    </div>
+                    <div class="local">
+                        <iframe src="http://xennick.com:5001/chat" 
+                        width="100%" 
+                        height="400" 
+                        frameborder="0">
+                        </iframe>
+                    </div>
+
+
+                                        <div class="mood-container" id="moodContainer">
+                        <div class="mood-prompt" style="text-align: center">What type of food are you in the mood for?</div>
+                                                <div class="mood-input-container" style="display: flex; gap: 10px; align-items: center;">
+                            <select id="moodSelect" class="mood-input" style="width: 100%; max-width: 200px;">
+                                <option value="" disabled selected>Select Food</option>
+                                <option>British</option>
+                                <option>French</option>
+                                <option>Italian</option>
+                                <option>Spanish</option>
+                                <option>German</option>
+                                <option>Belgian</option>
+                                <option>Dutch</option>
+                                <option>Indian</option>
+                                <option>Korean</option>
+                                <option>Japanese</option>
+                                <option>Chinese</option>
+                                <option>Thai</option>
+                                <option>Vietnamese</option>
+                                <option>American</option>
+                                <option>Mexican</option>
+                            </select>
+                            <button id="sendMood" class="nav-button" style="height: 40px;">Send</button>
+                        </div>
+                        <div id="foodLoading" style="display:none; flex-direction:column; align-items:center; margin-top:18px;">
+                            <div class="spinner" style="margin-bottom:10px;"></div>
+                            <div style="color:#888; font-size:1rem; text-align: center;">Finding the best dining spot for you...</div>
+                        </div>
+                        <div id="foodResult" style="padding:15px;"></div>
+                    </div>
+
+
+
+                    <div class="info-box" style="margin-top:18px;">
+    <h3 style="text-align:center; margin-bottom:12px;">Campus Shuttle Map</h3>
+    <div class="map-container" onclick="openMapModal()">
+        <img src="/transitmap.jpg" alt="Campus Shuttle Map" style="width:100%;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);object-fit:contain;height:calc(100% - 40px);">
+        <div class="expand-hint">Click to expand</div>
+    </div>
+</div>
+
+
+<!-- Map Modal -->
+<div id="mapModal" class="map-modal">
+    <div class="map-modal-content">
+        <span class="map-close" onclick="closeMapModal()">&times;</span>
+        <h3 class="map-modal-title">Campus Shuttle Map</h3>
+        <img src="/transitmap.jpg" alt="Campus Shuttle Map - Expanded View" class="map-modal-image">
+    </div>
+</div>
+
+
+
+
+
+
+
+
+                    <div id="errorContainer"></div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="right-panel">
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <div class="calendar-title" id="calendarTitle">October 2025</div>
+                        <div class="calendar-nav">
+                            <button class="nav-button" onclick="previousMonth()">‹</button>
+                            <button class="nav-button" onclick="nextMonth()">›</button>
+                            <button class="nav-button" onclick="goToToday()">Today</button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Calendar will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        let sampleEvents = {};
+
+        // Authentication check function
+        async function checkAuthentication() {
+            try {
+                console.log("Checking authentication...");
+                
+                const response = await fetch('http://localhost:25480/proxy/d2l/api/lp/1.32/users/whoami', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.log("Auth check failed - response not OK:", response.status);
+                    redirectToLogin();
+                    return false;
+                }
+
+                const data = await response.json();
+                console.log("Auth response:", data);
+
+                // Check if response contains forbidden error
+                if (data.Errors && Array.isArray(data.Errors)) {
+                    const hasForbiddenError = data.Errors.some(error => 
+                        error.Message && error.Message.toLowerCase().includes('forbidden')
+                    );
+                    
+                    if (hasForbiddenError) {
+                        console.log("Authentication failed - forbidden error");
+                        redirectToLogin();
+                        return false;
+                    }
+                }
+
+                // If we get here, authentication is successful
+                console.log("Authentication successful");
+                return true;
+
+            } catch (error) {
+                console.error('Auth check error:', error);
+                redirectToLogin();
+                return false;
+            }
+        }
+
+        function redirectToLogin() {
+            console.log("Redirecting to login page...");
+            window.location.href = '/';
+        }
+
+        function showMainContent() {
+            document.getElementById('authLoading').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+
+
+
+        async function fetchCalendarEvents() {
+            const results = [];
+            let ids = [];
+            
+            console.log("Fetching enrollment data...");
+            showLoading(true);
+            
+            try {
+                // First, get enrollment data
+                const enrollmentResponse = await fetch('http://localhost:25480/proxy/d2l/api/lp/1.46/enrollments/myenrollments/', {
+                    credentials: 'include',
+                });
+                
+                if (!enrollmentResponse.ok) {
+                    throw new Error(`Failed to fetch enrollments: ${enrollmentResponse.status}`);
+                }
+                
+                const enrollmentData = await enrollmentResponse.json();
+                ids = extractIds(enrollmentData);
+                console.log("Extracted course IDs:", ids);
+                
+                if (ids.length === 0) {
+                    console.warn("No course IDs found");
+                    showError("No enrolled courses found");
+                    return results;
+                }
+                
+                // Then fetch assignments/events
+                const list = ids.join(",");
+                console.log("Fetching events for courses:", list);
+                
+                const eventsResponse = await fetch(`http://localhost:25480/proxy/d2l/api/le/1.75/content/myItems/due/?orgUnitIdsCSV=${list}`, {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!eventsResponse.ok) {
+                    throw new Error(`Failed to fetch events: ${eventsResponse.status}`);
+                }
+                
+                const eventsData = await eventsResponse.json();
+                console.log("Raw events data:", eventsData);
+                
+                // Handle different response formats
+                if (Array.isArray(eventsData)) {
+                    results.push(...eventsData);
+                } else if (eventsData && typeof eventsData === 'object') {
+                    // If it's an object with arrays as values
+                    Object.values(eventsData).forEach(value => {
+                        if (Array.isArray(value)) {
+                            results.push(...value);
+                        } else {
+                            results.push(value);
+                        }
+                    });
+                }
+                
+                console.log("Processed events:", results);
+                
+            } catch (error) {
+                console.error('Error fetching calendar events:', error);
+                showError(`Error loading events: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+            
+            return results;
+        }
+
+        async function foodFinder(query) {
+            try {
+                const response = await fetch('http://localhost:25480/food', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query })
+                });
+                if (!response.ok) throw new Error('Failed to fetch food options');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Food finder error:', error);
+                return [];
+            }
+        }
+
+        function openModal(dateStr) {
+            const modal = document.getElementById('eventModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+
+            const events = sampleEvents[dateStr] || [];
+            modalTitle.textContent = `Events for ${dateStr}`;
+
+            if (events.length === 0) {
+                modalContent.innerHTML = `<p style="color:#666;">No events scheduled for this day.</p>`;
+            } else {
+                modalContent.innerHTML = events.map(event => {
+                    const completedStyle = event.completed ? 'opacity: 0.6; text-decoration: line-through;' : '';
+                    const title = event.completed ? `✓ ${event.title}` : event.title;
+
+                    return `
+                        <a href="${event.link}" target="_blank" 
+                           class="event-item" 
+                           style="background:${event.color}; color:#000; display:block; margin-bottom:6px; text-decoration:none; ${completedStyle}"
+                           title="${title} - ${event.time}">
+                           ${title} • ${event.time} (${event.type})
+                        </a>
+                    `;
+                }).join('');
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('eventModal').style.display = 'none';
+        }
+
+        function extractIds(jsonData) {
+            if (!jsonData || !jsonData.Items || !Array.isArray(jsonData.Items)) {
+                console.warn("Invalid enrollment data structure:", jsonData);
+                return [];
+            }
+            
+            return jsonData.Items.map(item => {
+                return item.OrgUnit ? item.OrgUnit.Id : null;
+            }).filter(id => id !== null);
+        }
+
+        function orgUnitIdToColor(orgUnitId) {
+            // Simple hash → HSL → HEX
+            const hash = Array.from(String(orgUnitId)).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            const hue = hash % 320;
+            return `hsl(${hue}, 60%, 60%)`; // nice pastel-ish color
+        }
+
+        function transformEventsToCalendarData(events) {
+            const eventData = {};
+            console.log("Transforming events:", events);
+
+            events.forEach((event, index) => {
+                console.log(`Processing event ${index}:`, event);
+                processEvent(event, eventData);
+            });
+
+            console.log("Final event data:", eventData);
+            return eventData;
+        }
+
+        function processEvent(event, eventData) {
+            if (!event || typeof event !== "object") {
+                console.log("Skipping invalid event:", event);
+                return;
+            }
+
+            // Check for DueDate or EndDate
+            const dueDate = event.DueDate || event.EndDate;
+            if (!dueDate) {
+                console.log("Skipping event without due date:", event);
+                return;
+            }
+
+            try {
+                const dateObj = new Date(dueDate);
+                if (isNaN(dateObj.getTime())) {
+                    console.log("Invalid date in event:", dueDate, event);
+                    return;
+                }
+                
+                const dateStr = dateObj.toLocaleDateString("en-CA"); 
+
+                
+                if (!eventData[dateStr]) {
+                    eventData[dateStr] = [];
+                }
+
+                const time = dateObj.toLocaleTimeString([], { 
+                    hour: "2-digit", 
+                    minute: "2-digit",
+                    hour12: true
+                });
+
+                const eventItem = {
+                    title: event.ItemName || event.Title || "Untitled Assignment",
+                    time: time,
+                    link: event.ItemUrl || "#",
+                    color: orgUnitIdToColor(event.OrgUnitId),
+                    type: getActivityTypeDescription(event.ActivityType),
+                    completed: event.DateCompleted ? true : false
+                };
+
+                eventData[dateStr].push(eventItem);
+                console.log(`Added event for ${dateStr}:`, eventItem);
+                
+            } catch (error) {
+                console.error("Error processing event:", error, event);
+            }
+        }
+
+        function getActivityTypeDescription(activityType) {
+            const types = {
+                1: "Quiz",
+                2: "Assignment", 
+                3: "Discussion",
+                4: "Content",
+                5: "Survey"
+            };
+            return types[activityType] || "Activity";
+        }
+
+        function generateCalendar(month, year) {
+            const monthNames = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+            const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            
+            document.getElementById('calendarTitle').textContent = `${monthNames[month]} ${year}`;
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            
+            let calendarHTML = '';
+            
+            // Day headers
+            dayNames.forEach(day => {
+                calendarHTML += `<div class="calendar-day-header">${day}</div>`;
+            });
+
+            // Prev month's trailing days
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const dayNum = daysInPrevMonth - i;
+                calendarHTML += `<div class="calendar-day other-month">
+                    <div class="day-number">${dayNum}</div>
+                </div>`;
+            }
+            
+            // Current month's days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const events = sampleEvents[dateStr] || [];
+                const hasEvents = events.length > 0;
+                const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+                
+                let dayClass = 'calendar-day';
+                if (hasEvents) dayClass += ' has-event';
+                if (isToday) dayClass += ' today';
+                
+                let eventsHTML = '';
+                const maxDisplayEvents = 3;
+                
+                events.slice(0, maxDisplayEvents).forEach(event => {
+                    const completedStyle = event.completed ? 'opacity: 0.6; text-decoration: line-through;' : '';
+                    const title = event.completed ? `✓ ${event.title}` : event.title;
+                    
+                    eventsHTML += `
+                        <a href="${event.link}" target="_blank" 
+                           class="event-item" 
+                           style="background:${event.color}; color:#000; text-decoration:none; ${completedStyle}"
+                           title="${title} - ${event.time}">
+                           ${title}
+                        </a>`;
+                });
+                
+                if (events.length > maxDisplayEvents) {
+                    eventsHTML += `<div class="event-item" style="background:#ddd; font-style:italic;">+${events.length - maxDisplayEvents} more</div>`;
+                }
+                
+                calendarHTML += `<div class="${dayClass}" data-date="${dateStr}">
+                    <div class="day-number">${day}</div>
+                    ${eventsHTML}
+                </div>`;
+            }
+            
+            // Next month's leading days
+            const totalCells = 7 + firstDay + daysInMonth; // headers + used cells
+            const remainingCells = Math.ceil(totalCells / 7) * 7 - totalCells; // fill to complete weeks
+            
+            for (let d = 1; d <= remainingCells; d++) {
+                calendarHTML += `<div class="calendar-day other-month">
+                    <div class="day-number">${d}</div>
+                </div>`;
+            }
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = calendarHTML;
+
+            // Attach click listeners to day cells (avoid opening modal when clicking a link inside the cell)
+            grid.querySelectorAll('.calendar-day').forEach(cell => {
+                const date = cell.getAttribute('data-date');
+                if (!date) return; // skip other-month header cells that don't have a date
+                cell.addEventListener('click', (e) => {
+                    // if user clicked an anchor inside the cell, don't open modal so the anchor behaves normally
+                    if (e.target.closest('a')) return;
+                    openModal(date);
+                });
+            });
+        }
+
+        function previousMonth() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            generateCalendar(currentMonth, currentYear);
+        }
+
+        function nextMonth() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            generateCalendar(currentMonth, currentYear);
+        }
+
+        function goToToday() {
+            const today = new Date();
+            currentMonth = today.getMonth();
+            currentYear = today.getFullYear();
+            generateCalendar(currentMonth, currentYear);
+        }
+
+        function updateCalendarData(newEventData) {
+            sampleEvents = newEventData;
+            generateCalendar(currentMonth, currentYear);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
+        }
+
+        function clearErrors() {
+            document.getElementById('errorContainer').innerHTML = '';
+        }
+
+        async function updateGreetingText() {
+            try {
+                const response = await fetch('http://localhost:25480/proxy/d2l/api/lp/1.32/users/whoami', {
+                    credentials: 'include'
+                });
+                if (!response.ok) throw new Error('Failed to fetch user info');
+                const data = await response.json();
+                const firstName = data.FirstName || "Student";
+                document.getElementById('greetingText').textContent = `Hello, ${firstName}!`;
+            } catch (err) {
+                document.getElementById('greetingText').textContent = "Hello, Student!";
+            }
+        }
+
+        async function refreshEvents() {
+            clearErrors();
+            const allEvents = await fetchCalendarEvents();
+            const newEventData = transformEventsToCalendarData(allEvents);
+            updateCalendarData(newEventData);
+        }
+
+        // Initialize the page with authentication check
+        window.addEventListener('load', async () => {
+            // Check authentication first
+            const isAuthenticated = await checkAuthentication();
+            
+            if (!isAuthenticated) {
+                // redirectToLogin() is already called in checkAuthentication()
+                return;
+            }
+
+            // If authenticated, show main content and continue with initialization
+            showMainContent();
+            initThemeToggle();
+            // Slide in the greeting bar after a short delay
+            setTimeout(() => {
+                document.getElementById('greetingBar').classList.add('slide-in');
+            }, 500);
+
+            await updateGreetingText();
+            generateCalendar(currentMonth, currentYear);
+            await refreshEvents();
+            
+            // Load crime map if available
+            loadCrimeMap();
+        });
+
+
+        function initThemeToggle() {
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
+    
+    // Check for saved theme preference or default to light mode
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    body.setAttribute('data-theme', currentTheme);
+    
+    // Update icon based on current theme
+    updateThemeIcon(currentTheme);
+    
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = body.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        body.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+    });
+}
+
+function updateThemeIcon(theme) {
+    const themeToggle = document.getElementById('themeToggle');
+    // Crescent moon for light mode (to switch to dark), sun for dark mode (to switch to light)
+    themeToggle.textContent = theme === 'light' ? '☾' : '☽';
+}
+
+function openMapModal() {
+    const modal = document.getElementById('mapModal');
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMapModal() {
+    const modal = document.getElementById('mapModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Add event listeners for the map modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeMapModal();
+        }
+    });
+
+    // Close modal when clicking outside the image
+    const mapModal = document.getElementById('mapModal');
+    if (mapModal) {
+        mapModal.addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeMapModal();
+            }
+        });
+    }
+});
+
+let currentUserId = null;
+
+        async function init() {
+            await loadUserInfo();
+            if (currentUserId) {
+                loadFriends();
+            }
+        }
+
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('http://localhost:25480/proxy/d2l/api/lp/1.32/users/whoami');
+                if (!response.ok) throw new Error(`Failed to fetch user info: ${response.status}`);
+                const userData = await response.json();
+                currentUserId = userData.Identifier;
+                document.getElementById('userInfo').innerHTML = `<strong>Current User ID:</strong> ${currentUserId}`;
+                showMessage(`Welcome! Your user ID is: ${currentUserId}`, 'info');
+            } catch (error) {
+                console.error('Error loading user info:', error);
+                document.getElementById('userInfo').innerHTML = `
+                    <div>Failed to load user information</div>
+                    <div>Error: ${error.message}</div>
+                `;
+                showMessage('Failed to load user information. Please check if the server is running.', 'error');
+            }
+        }
+
+        async function loadFriends() {
+            if (!currentUserId) {
+                showMessage('User ID not available. Please refresh the page.', 'error');
+                return;
+            }
+            const friendsList = document.getElementById('friendsList');
+            friendsList.innerHTML = '<div>Loading friends...</div>';
+            try {
+                const response = await fetch(`/get-friends?user_id=${currentUserId}`);
+                const data = await response.json();
+                if (data.success) {
+                    if (data.friends && data.friends.length > 0) {
+                        friendsList.innerHTML = data.friends.map(friend => 
+                            `<div>Friend ID: ${friend.friend_id}</div>`
+                        ).join('');
+                    } else {
+                        friendsList.innerHTML = '<div>No friends found. Add some friends to get started!</div>';
+                    }
+                } else {
+                    throw new Error(data.error || 'Failed to load friends');
+                }
+            } catch (error) {
+                console.error('Error loading friends:', error);
+                friendsList.innerHTML = '<div>Failed to load friends</div>';
+                showMessage(`Error loading friends: ${error.message}`, 'error');
+            }
+        }
+
+        async function addFriend() {
+            const friendId = document.getElementById('friendIdInput').value.trim();
+            if (!friendId) {
+                showMessage('Please enter a friend ID', 'error');
+                return;
+            }
+            if (!currentUserId) {
+                showMessage('User ID not available. Please refresh the page.', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/add-friends', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id_1: currentUserId, user_id_2: friendId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showMessage('Friend request sent successfully!', 'success');
+                    document.getElementById('friendIdInput').value = '';
+                } else {
+                    showMessage(data.error || 'Failed to send friend request', 'error');
+                }
+            } catch (error) {
+                console.error('Error adding friend:', error);
+                showMessage(`Error adding friend: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkFriendship() {
+            const friendId = document.getElementById('checkFriendIdInput').value.trim();
+            if (!friendId) {
+                showMessage('Please enter a user ID to check', 'error');
+                return;
+            }
+            if (!currentUserId) {
+                showMessage('User ID not available. Please refresh the page.', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/check-friends', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id_1: currentUserId, user_id_2: friendId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const message = data.are_friends 
+                        ? `You are friends with user ID: ${friendId}` 
+                        : `You are not friends with user ID: ${friendId}`;
+                    showMessage(message, 'info');
+                } else {
+                    showMessage(data.error || 'Failed to check friendship', 'error');
+                }
+            } catch (error) {
+                console.error('Error checking friendship:', error);
+                showMessage(`Error checking friendship: ${error.message}`, 'error');
+            }
+        }
+
+        function showMessage(message, type = 'info') {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = message;
+            messagesContainer.appendChild(messageDiv);
+            setTimeout(() => messageDiv.remove(), 5000);
+            messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        document.getElementById('friendIdInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addFriend();
+        });
+
+        document.getElementById('checkFriendIdInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkFriendship();
+        });
+
+        window.addEventListener('load', init);
+
+        // Mood input handler
+document.addEventListener('DOMContentLoaded', function() {
+    const moodSelect = document.getElementById('moodSelect');
+    const sendMood = document.getElementById('sendMood');
+    const moodContainer = document.getElementById('moodContainer');
+    const foodLoading = document.getElementById('foodLoading');
+    const foodResult = document.getElementById('foodResult');
+
+    if (sendMood && moodSelect) {
+        sendMood.addEventListener('click', async function() {
+            const value = moodSelect.value;
+            if (value) {
+                // Show loading and gray out
+                moodContainer.classList.add('loading');
+                foodLoading.style.display = 'flex';
+                foodResult.textContent = '';
+
+                const result = await foodFinder(value);
+
+                // Hide loading and restore
+                foodLoading.style.display = 'none';
+                moodContainer.classList.remove('loading');
+
+                // Display result (customize as needed)
+                if (result && result.message) {
+                    let string = result.message.substring(result.message.indexOf("The best")+ 25).toLowerCase();
+                    string = string.charAt(0).toUpperCase() + string.slice(1);
+                    foodResult.textContent = "Dining Hall:\n\n"  + string + "";
+                } else {
+                    foodResult.textContent = "No recommendation found.";
+                }
+            }
+        });
+    }
+});
+    </script>
+</body>
+</html>
