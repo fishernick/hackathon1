@@ -241,41 +241,6 @@
       margin: 1rem 0;
     }
     
-    .modal-buttons {
-      display: flex;
-      gap: 12px;
-      margin-top: 2rem;
-    }
-    
-    .modal-button {
-      flex: 1;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: background-color 0.2s ease;
-    }
-    
-    .modal-button.primary {
-      background: #CFB991;
-      color: #000000;
-    }
-    
-    .modal-button.primary:hover {
-      background: #B8A47A;
-    }
-    
-    .modal-button.secondary {
-      background: #444444;
-      color: #ffffff;
-    }
-    
-    .modal-button.secondary:hover {
-      background: #555555;
-    }
-    
     .form-spinner {
       display: inline-block;
       width: 16px;
@@ -285,41 +250,6 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-right: 8px;
-    }
-
-    .form-header {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-
-    .form-header h3 {
-      color: #CFB991;
-      font-size: 1.3em;
-      margin: 0;
-      font-weight: 600;
-    }
-
-    .form-header p {
-      color: #cccccc;
-      font-size: 14px;
-      margin: 8px 0;
-    }
-
-    .cancel-btn {
-      background: #444444 !important;
-      color: #ffffff !important;
-      margin-top: 8px;
-    }
-
-    .cancel-btn:hover {
-      background: #555555 !important;
-    }
-
-    .code-input {
-      font-family: 'Courier New', monospace;
-      font-size: 18px;
-      letter-spacing: 2px;
-      text-align: center;
     }
 
     .redirect-status {
@@ -366,22 +296,11 @@
     <div class="login-box">
       <h2>Boilerplate Login</h2>
       
-      <!-- Step 1: Login Form -->
+      <!-- Login Form -->
       <form id="loginForm">
         <input type="text" id="username" placeholder="Purdue Username" required autocomplete="username">
         <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
         <button type="submit" id="loginButton">Login</button>
-      </form>
-      
-      <!-- Step 2: Code Input Form -->
-      <form id="codeForm" class="hidden">
-        <div class="form-header">
-          <h3>Enter Duo Verification Code</h3>
-          <p>Enter the code displayed in the popup below:</p>
-        </div>
-        <input type="text" id="codeInput" class="code-input" placeholder="000000" required maxlength="6" pattern="[0-9]{6}">
-        <button type="submit" id="codeButton">Submit Code</button>
-        <button type="button" id="cancelButton" class="cancel-btn">Cancel</button>
       </form>
       
       <!-- Status Display -->
@@ -393,20 +312,17 @@
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <h3>Duo Authentication Code</h3>
-      <p>Please enter code in your Duo Mobile app:</p>
+      <p>Please enter this code in your Duo Mobile app:</p>
       <div class="duo-code" id="duoCodeValue"></div>
       <p style="font-size: 0.9em; color: #cccccc;">
+        Waiting for Duo authentication to complete...
       </p>
     </div>
   </div>
 
   <script>
-    const API_BASE = 'http://xennick.com:25480';
-    let currentSessionId = null;
+    const API_BASE = 'http://localhost:25480';
     let isProcessing = false;
-    let cookiePollingInterval = null;
-    let cookiesStored = false;
-    let redirectTimer = null;
 
     // Authentication check function
     async function checkAuthentication() {
@@ -470,124 +386,6 @@
       window.location.href = `${API_BASE}/dashboard.html`;
     }
 
-    // Function to start polling for cookies
-    function startCookiePolling() {
-      if (!currentSessionId || cookiePollingInterval) return;
-      
-      console.log('Starting cookie polling...');
-      showStatus("Waiting for Duo authentication... Please complete authentication in Duo Mobile app.", "loading");
-      
-      cookiePollingInterval = setInterval(async () => {
-        try {
-          const response = await fetch(`${API_BASE}/get-cookies/${currentSessionId}`);
-          const result = await response.json();
-          
-          if (result.success && result.ready && result.cookies && !cookiesStored) {
-            console.log('Cookies received! Processing...');
-            
-            // Store cookies
-            await storeCookiesInBrowser(result.cookies);
-            cookiesStored = true;
-            
-            // Stop polling
-            clearInterval(cookiePollingInterval);
-            cookiePollingInterval = null;
-            
-            // Show success and start redirect countdown
-            showRedirectStatus();
-            
-          } else if (result.ready === false) {
-            console.log('Authentication in progress...');
-            showStatus("Authentication in progress... Please complete in Duo Mobile app.", "loading");
-          } else if (result.error) {
-            console.error('Authentication error:', result.error);
-            showStatus(`Authentication failed: ${result.error}`, "error");
-            stopCookiePolling();
-          }
-        } catch (error) {
-          console.error('Cookie polling error:', error);
-          showStatus("Connection error while checking authentication status.", "error");
-        }
-      }, 1500); // Poll every 1.5 seconds for faster response
-    }
-
-    // Function to show redirect status and start countdown
-    function showRedirectStatus() {
-      let countdown = 3;
-      
-      function updateCountdown() {
-        showStatus(`Authentication successful! Redirecting in ${countdown} seconds...`, "redirect-status");
-        
-        if (countdown <= 0) {
-          redirectToDashboard();
-        } else {
-          countdown--;
-          redirectTimer = setTimeout(updateCountdown, 1000);
-        }
-      }
-      
-      updateCountdown();
-    }
-
-    // Function to stop polling
-    function stopCookiePolling() {
-      if (cookiePollingInterval) {
-        clearInterval(cookiePollingInterval);
-        cookiePollingInterval = null;
-        console.log('Cookie polling stopped');
-      }
-      
-      if (redirectTimer) {
-        clearTimeout(redirectTimer);
-        redirectTimer = null;
-      }
-    }
-
-    // Function to store cookies in the browser
-    async function storeCookiesInBrowser(cookies) {
-      try {
-        const expires = new Date();
-        expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000)); // 24 hours
-        
-        // Set cookies for current domain
-        if (cookies.d2lSessionVal) {
-          document.cookie = `d2lSessionVal=${cookies.d2lSessionVal}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
-        }
-        if (cookies.d2lSecureSessionVal) {
-          document.cookie = `d2lSecureSessionVal=${cookies.d2lSecureSessionVal}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
-        }
-        
-        // Store in localStorage as backup
-        localStorage.setItem('d2l_session_data', JSON.stringify({
-          d2lSessionVal: cookies.d2lSessionVal || '',
-          d2lSecureSessionVal: cookies.d2lSecureSessionVal || '',
-          timestamp: Date.now()
-        }));
-        
-        console.log('Cookies stored successfully');
-        
-        // Notify server that cookies are received
-        try {
-          await fetch(`${API_BASE}/receive-cookies`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              sessionId: currentSessionId,
-              received: true
-            })
-          });
-        } catch (notifyError) {
-          console.warn('Failed to notify server of cookie receipt:', notifyError);
-        }
-        
-      } catch (error) {
-        console.error('Error storing cookies:', error);
-        showStatus("Error storing authentication data.", "error");
-      }
-    }
-
     function showModal(code) {
       document.getElementById("duoCodeValue").innerText = code;
       document.getElementById("modalOverlay").style.display = "flex";
@@ -612,35 +410,52 @@
       document.getElementById('status').innerHTML = '';
     }
     
-    function showLoginForm() {
-      document.getElementById('loginForm').classList.remove('hidden');
-      document.getElementById('codeForm').classList.add('hidden');
-    }
-    
-    function showCodeForm() {
-      document.getElementById('loginForm').classList.add('hidden');
-      document.getElementById('codeForm').classList.remove('hidden');
-      setTimeout(() => {
-        document.getElementById('codeInput').focus();
-      }, 100);
-    }
-    
-    function setButtonsDisabled(disabled) {
+    function setButtonDisabled(disabled) {
       document.getElementById('loginButton').disabled = disabled;
-      document.getElementById('codeButton').disabled = disabled;
     }
 
-    // Auto-format code input and start polling
-    document.getElementById('codeInput').addEventListener('input', function(e) {
-      this.value = this.value.replace(/[^0-9]/g, '');
-      
-      // Start polling when user starts typing (if not already started)
-      if (this.value.length > 0 && !cookiePollingInterval && currentSessionId) {
-        startCookiePolling();
+    // Function to store cookies in the browser
+    function storeCookiesInBrowser(cookies) {
+      try {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000)); // 24 hours
+        
+        // Set cookies for current domain
+        if (cookies.d2lSessionVal) {
+          document.cookie = `d2lSessionVal=${cookies.d2lSessionVal}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+        }
+        if (cookies.d2lSecureSessionVal) {
+          document.cookie = `d2lSecureSessionVal=${cookies.d2lSecureSessionVal}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+        }
+        
+        console.log('Cookies stored successfully');
+        return true;
+        
+      } catch (error) {
+        console.error('Error storing cookies:', error);
+        return false;
       }
-    });
+    }
 
-    // Step 1: Initial login
+    // Function to show redirect status and start countdown
+    function showRedirectStatus() {
+      let countdown = 3;
+      
+      function updateCountdown() {
+        showStatus(`Authentication successful! Redirecting in ${countdown} seconds...`, "redirect-status");
+        
+        if (countdown <= 0) {
+          redirectToDashboard();
+        } else {
+          countdown--;
+          setTimeout(updateCountdown, 1000);
+        }
+      }
+      
+      updateCountdown();
+    }
+
+    // Main login function with separated code display and cookie retrieval
     document.getElementById("loginForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       
@@ -659,8 +474,9 @@
 
       try {
         showStatus("Logging into Purdue and retrieving Duo code...");
-        setButtonsDisabled(true);
+        setButtonDisabled(true);
 
+        // Make the login request - this now returns the code immediately
         const response = await fetch(`${API_BASE}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -669,18 +485,17 @@
 
         const result = await response.json();
         
-        if (result.success && result.sessionId && result.code) {
-          currentSessionId = result.sessionId;
-          cookiesStored = false; // Reset flag
+        if (result.success && result.code && result.authId) {
+          console.log('Login successful, received code:', result.code);
           
-          // Show the duo code in modal
+          // Show the duo code in modal immediately
           showModal(result.code);
           
-          // Switch to code input form
-          showCodeForm();
+          // Show waiting status
+          showStatus("Please complete Duo authentication in your mobile app...");
           
-          // Start polling immediately
-          startCookiePolling();
+          // Start polling for authentication completion
+          pollForAuthCompletion(result.authId);
           
         } else {
           const errorMessage = result.error || 'Unknown error occurred';
@@ -690,23 +505,67 @@
 
       } catch (error) {
         console.error('Login error:', error);
+        closeModal();
         showStatus(`Network error: ${error.message}`, "error");
         setTimeout(() => hideStatus(), 5000);
       } finally {
-        setButtonsDisabled(false);
+        setButtonDisabled(false);
         isProcessing = false;
       }
     });
 
-    // Code form submission (optional manual entry)
-    document.getElementById("codeForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      // The polling will handle the authentication automatically
-      // This is just for manual code entry if needed by your backend
-    });
-
-    // Cancel button
-    document.getElementById("cancelButton").addEventListener("click", cancelLogin);
+    // Function to poll for authentication completion
+    async function pollForAuthCompletion(authId) {
+      const maxAttempts = 80; // 2 minutes (80 * 1.5 seconds)
+      let attempts = 0;
+      
+      const poll = async () => {
+        try {
+          const response = await fetch(`${API_BASE}/auth-status/${authId}`);
+          const result = await response.json();
+          
+          if (result.success && result.completed && result.cookies) {
+            console.log('Authentication completed, received cookies');
+            
+            // Store cookies in browser
+            const cookiesStored = storeCookiesInBrowser(result.cookies);
+            
+            if (cookiesStored) {
+              // Close modal and show success
+              closeModal();
+              showRedirectStatus();
+              return; // Stop polling
+            } else {
+              throw new Error('Failed to store authentication cookies');
+            }
+            
+          } else if (result.error) {
+            throw new Error(result.error);
+            
+          } else if (result.success && !result.completed) {
+            // Still in progress, continue polling
+            attempts++;
+            if (attempts < maxAttempts) {
+              setTimeout(poll, 1500); // Poll every 1.5 seconds
+            } else {
+              throw new Error('Authentication timeout - please try again');
+            }
+            
+          } else {
+            throw new Error('Unexpected response from server');
+          }
+          
+        } catch (error) {
+          console.error('Polling error:', error);
+          closeModal();
+          showStatus(`Authentication error: ${error.message}`, "error");
+          setTimeout(() => hideStatus(), 5000);
+        }
+      };
+      
+      // Start polling
+      poll();
+    }
 
     // Close modal when clicking on overlay
     document.getElementById("modalOverlay").addEventListener("click", function(e) {
@@ -714,39 +573,6 @@
         closeModal();
       }
     });
-    
-    async function cancelLogin() {
-      stopCookiePolling();
-      
-      if (currentSessionId && !isProcessing) {
-        try {
-          await fetch(`${API_BASE}/cleanup-session/${currentSessionId}`, {
-            method: "POST"
-          });
-        } catch (error) {
-          console.error("Cancel error:", error);
-        }
-      }
-      
-      resetForm();
-    }
-
-    function resetForm() {
-      stopCookiePolling();
-      currentSessionId = null;
-      isProcessing = false;
-      cookiesStored = false;
-      closeModal();
-      showLoginForm();
-      hideStatus();
-      setButtonsDisabled(false);
-      
-      document.getElementById("username").value = "";
-      document.getElementById("password").value = "";
-      document.getElementById("codeInput").value = "";
-      
-      document.getElementById("username").focus();
-    }
 
     // Initialize page with authentication check
     window.addEventListener('load', async () => {
@@ -763,13 +589,11 @@
       showLoginContent();
     });
 
-    // Handle escape key to cancel
+    // Handle escape key to close modal
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         if (document.getElementById("modalOverlay").style.display === "flex") {
           closeModal();
-        } else if (!document.getElementById('codeForm').classList.contains('hidden')) {
-          cancelLogin();
         }
       }
     });

@@ -5,18 +5,14 @@ const path = require("path");
 const puppeteer = require('puppeteer');
 const { exec, execFile } = require("child_process");
 const TARGET = 'https://purdue.brightspace.com'; 
-app.use(express.static(path.join(__dirname, "public")));
 
-// Store active sessions
-const activeSessions = new Map();
+app.use(express.static(path.join(__dirname, "public")));
 
 // Global cookie storage for proxy
 let globalCookies = {
   d2lSessionVal: null,
   d2lSecureSessionVal: null
 };
-
-app.use(express.static(path.join(__dirname, "public")));
 
 // Disable CORS for all routes
 app.use((req, res, next) => {
@@ -35,12 +31,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Generate unique session ID
-function generateSessionId() {
-  return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-}
-
-// Dashboard route - serve thea HTML file
+// Dashboard route - serve the HTML file
 app.get("/dashboard.html", (req, res) => {
   res.sendFile(path.join(__dirname, "dashboard.html"));
 });
@@ -49,6 +40,9 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "LoginPage.html"));
 });
 
+// Store active authentication sessions
+const activeAuth = new Map();
+
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
   
@@ -56,7 +50,7 @@ app.post("/login", async (req, res) => {
     return res.status(400).json({ success: false, error: 'Username and password required' });
   }
 
-  const sessionId = generateSessionId();
+  const authId = 'auth_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   let browser = null;
   let page = null;
 
@@ -64,9 +58,9 @@ app.post("/login", async (req, res) => {
     browser = await puppeteer.launch({
       headless: true, 
       args: ['--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-features=WebAuthn,WebAuth',
-    '--disable-webauthn']
+        '--disable-setuid-sandbox',
+        '--disable-features=WebAuthn,WebAuth',
+        '--disable-webauthn']
     });
 
     page = await browser.newPage();
@@ -93,35 +87,32 @@ app.post("/login", async (req, res) => {
     // Step 6: Extract the code
     const code = await page.$eval('div.verification-code', el => el.innerText.trim());
 
-    // Store the session data
-    activeSessions.set(sessionId, {
+    console.log(`Login successful for user ${username}, Duo code generated: ${code}`);
+
+    // Store the auth session for background processing
+    activeAuth.set(authId, {
       browser,
       page,
-      code,
+      username,
       timestamp: Date.now(),
-      username
+      completed: false,
+      cookies: null,
+      error: null
     });
-    console.log(`Login successful for user ${username}, session ID: ${sessionId}`);
 
-    // Step 7: Send the code and session ID back to the client
+    // Send the code immediately to display to user
     res.json({ 
       success: true, 
-      code, 
-      sessionId 
+      code,
+      authId
     });
 
-    // After successful login, update the crime map
-    //exec("/Users/nick/PycharmProjects/ItDoesntMatterIDontCare/.venv/lib/python3.13 /ItDoesntMatterIDontCare/main.py", (error, stdout, stderr) => {
-    exec("python3 /Users/nick/Documents/hacky/ItDoesntMatterIDontCare/main.py", (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Crime map update error: ${error}`);
-      } else {
-      }
-    });
-
-    // Wait for authentication to complete in the background
-    page.waitForSelector('body.d2l-body', { timeout: 60000 }).then(async () => {
+    // Continue authentication in background
+    (async () => {
       try {
+        // Wait for authentication to complete
+        await page.waitForSelector('body.d2l-body', { timeout: 120000 });
+        
         const cookies = await page.cookies();
         const d2lSessionCookie = cookies.find(cookie => cookie.name === 'd2lSessionVal');
         const d2lSecureSessionCookie = cookies.find(cookie => cookie.name === 'd2lSecureSessionVal');
@@ -130,11 +121,45 @@ app.post("/login", async (req, res) => {
           // Store cookies globally for proxy use
           globalCookies.d2lSessionVal = d2lSessionCookie.value;
           globalCookies.d2lSecureSessionVal = d2lSecureSessionCookie.value;
+          
+          // Update auth session
+          const authSession = activeAuth.get(authId);
+          if (authSession) {
+            authSession.completed = true;
+            authSession.cookies = {
+              d2lSessionVal: d2lSessionCookie.value,
+              d2lSecureSessionVal: d2lSecureSessionCookie.value,
+              domain: d2lSessionCookie.domain,
+              path: d2lSecureSessionCookie.path
+            };
+          }
+          
+          console.log(`Authentication completed for ${username}`);
+        } else {
+          throw new Error('Required cookies not found');
         }
       } catch (error) {
-        console.error('Error extracting cookies:', error);
+        console.error('Background authentication error:', error);
+        const authSession = activeAuth.get(authId);
+        if (authSession) {
+          authSession.error = error.message;
+        }
+      } finally {
+        // Clean up browser
+        if (browser) {
+          await browser.close();
+        }
       }
-    }).catch(console.error);
+    })();
+
+    // Update the crime map
+    /*
+    exec("python3 /Users/nick/Documents/hacky/ItDoesntMatterIDontCare/main.py", (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Crime map update error: ${error}`);
+      }
+    });
+    */
 
   } catch (error) {
     console.error('Login error:', error);
@@ -155,8 +180,41 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Fixed proxy route
-app.get('/proxy/*path', async (req, res) => {
+// Endpoint to check authentication status and get cookies
+app.get('/auth-status/:authId', async (req, res) => {
+  const authId = req.params.authId;
+  const authSession = activeAuth.get(authId);
+  
+  if (!authSession) {
+    return res.status(404).json({ success: false, error: 'Authentication session not found' });
+  }
+  
+  if (authSession.error) {
+    // Clean up failed session
+    activeAuth.delete(authId);
+    return res.json({ success: false, error: authSession.error });
+  }
+  
+  if (authSession.completed && authSession.cookies) {
+    // Clean up completed session
+    activeAuth.delete(authId);
+    return res.json({ 
+      success: true, 
+      completed: true,
+      cookies: authSession.cookies 
+    });
+  }
+  
+  // Still in progress
+  return res.json({ 
+    success: true, 
+    completed: false,
+    message: 'Authentication in progress...' 
+  });
+});
+
+// Proxy route
+app.get('/proxy/*', async (req, res) => {
   try {
     // Extract the path after /proxy/
     const pathPart = req.originalUrl.substring(7) || '';
@@ -172,7 +230,6 @@ app.get('/proxy/*path', async (req, res) => {
     } else {
       cookieHeader = 'd2lSameSiteCanaryA=1; d2lSameSiteCanaryB=1';
     }
-    
     
     const upstreamRes = await fetch(targetUrl, {
       method: req.method,
@@ -202,72 +259,6 @@ app.get('/proxy/*path', async (req, res) => {
   }
 });
 
-app.get('/get-cookies/:sessionId', async (req, res) => {
-  const sessionId = req.params.sessionId;
-  
-  if (!sessionId || !activeSessions.has(sessionId)) {
-    return res.status(404).json({ success: false, error: 'Session not found' });
-  }
-
-  try {
-    const session = activeSessions.get(sessionId);
-    const { page } = session;
-
-    // Check if we're on the Brightspace page (after successful auth)
-    const url = page.url();
-    if (!url.includes('brightspace.com') || !url.includes('/d2l/')) {
-      return res.json({ success: false, ready: false, message: 'Authentication not complete yet' });
-    }
-
-    // Get cookies from the page
-    const cookies = await page.cookies();
-    const d2lSessionCookie = cookies.find(cookie => cookie.name === 'd2lSessionVal');
-    const d2lSecureSessionCookie = cookies.find(cookie => cookie.name === 'd2lSecureSessionVal');
-
-    if (d2lSessionCookie && d2lSecureSessionCookie) {
-      console.log(`Cookies retrieved for session ${sessionId}`);
-      
-      // Store cookies globally for proxy use
-      globalCookies.d2lSessionVal = d2lSessionCookie.value;
-      globalCookies.d2lSecureSessionVal = d2lSecureSessionCookie.value;
-      
-      return res.json({
-        success: true,
-        ready: true,
-        cookies: {
-          d2lSessionVal: d2lSessionCookie.value,
-          d2lSecureSessionVal: d2lSecureSessionCookie.value,
-          domain: d2lSessionCookie.domain,
-          path: d2lSecureSessionCookie.path
-        }
-      });
-    } else {
-      return res.json({ success: false, ready: false, message: 'Cookies not available yet' });
-    }
-
-  } catch (error) {
-    console.error('Error retrieving cookies:', error);
-    return res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-
-
-app.post('/cleanup-session/:sessionId', async (req, res) => {
-  const sessionId = req.params.sessionId;
-  
-  if (activeSessions.has(sessionId)) {
-    const session = activeSessions.get(sessionId);
-    if (session.browser) {
-      await session.browser.close();
-    }
-    activeSessions.delete(sessionId);
-    console.log(`Session ${sessionId} cleaned up`);
-  }
-  
-  res.json({ success: true });
-});
-
 app.post('/food', async (req, res) => {
   const userInput = req.body;
   
@@ -295,27 +286,28 @@ app.post('/food', async (req, res) => {
     });
   });
 });
-// Clean up expired sessions (every 10 minutes)
+
+// Clean up expired auth sessions (every 5 minutes)
 setInterval(() => {
   const now = Date.now();
   const expiredSessions = [];
   
-  for (const [sessionId, session] of activeSessions.entries()) {
-    // Sessions expire after 15 minutes
-    if (now - session.timestamp > 15 * 60 * 1000) {
-      expiredSessions.push(sessionId);
+  for (const [authId, authSession] of activeAuth.entries()) {
+    // Sessions expire after 10 minutes
+    if (now - authSession.timestamp > 10 * 60 * 1000) {
+      expiredSessions.push(authId);
     }
   }
   
-  for (const sessionId of expiredSessions) {
-    const session = activeSessions.get(sessionId);
-    if (session && session.browser) {
-      session.browser.close().catch(console.error);
+  for (const authId of expiredSessions) {
+    const authSession = activeAuth.get(authId);
+    if (authSession && authSession.browser) {
+      authSession.browser.close().catch(console.error);
     }
-    activeSessions.delete(sessionId);
-    console.log(`Cleaned up expired session: ${sessionId}`);
+    activeAuth.delete(authId);
+    console.log(`Cleaned up expired auth session: ${authId}`);
   }
-}, 10 * 60 * 1000);
+}, 5 * 60 * 1000);
 
 app.listen(PORT, () => {
   console.log(`Server listening at http://localhost:${PORT}`);

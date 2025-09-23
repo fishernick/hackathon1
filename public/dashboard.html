@@ -760,19 +760,14 @@ a:hover {
                             MyPurdue Portal
                         </a>
                     </div>
-                    <div class="local">
-                        <iframe src="http://xennick.com:5001/chat" 
-                        width="100%" 
-                        height="400" 
-                        frameborder="0">
-                        </iframe>
-                    </div>
 
 
-                                        <div class="mood-container" id="moodContainer">
+
+
+                        <div class="mood-container" id="moodContainer">
                         <div class="mood-prompt" style="text-align: center">What type of food are you in the mood for?</div>
-                                                <div class="mood-input-container" style="display: flex; gap: 10px; align-items: center;">
-                            <select id="moodSelect" class="mood-input" style="width: 100%; max-width: 200px;">
+                        <div class="mood-input-container" style="display: flex; gap: 10px; align-items: center;">
+                        <select id="moodSelect" class="mood-input" style="width: 100%; max-width: 200px;">
                                 <option value="" disabled selected>Select Food</option>
                                 <option>British</option>
                                 <option>French</option>
@@ -861,7 +856,7 @@ a:hover {
             try {
                 console.log("Checking authentication...");
                 
-                const response = await fetch('http://xennick.com:25480/proxy/d2l/api/lp/1.32/users/whoami', {
+                const response = await fetch('http://localhost:25480/proxy/d2l/api/lp/1.32/users/whoami', {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
@@ -869,6 +864,7 @@ a:hover {
                     }
                 });
 
+                console.log(response);
                 if (!response.ok) {
                     console.log("Auth check failed - response not OK:", response.status);
                     redirectToLogin();
@@ -923,7 +919,7 @@ a:hover {
             
             try {
                 // First, get enrollment data
-                const enrollmentResponse = await fetch('http://xennick.com:25480/proxy/d2l/api/lp/1.46/enrollments/myenrollments/', {
+                const enrollmentResponse = await fetch('http://localhost:25480/proxy/d2l/api/lp/1.46/enrollments/myenrollments/', {
                     credentials: 'include',
                 });
                 
@@ -945,7 +941,7 @@ a:hover {
                 const list = ids.join(",");
                 console.log("Fetching events for courses:", list);
                 
-                const eventsResponse = await fetch(`http://xennick.com:25480/proxy/d2l/api/le/1.75/content/myItems/due/?orgUnitIdsCSV=${list}`, {
+                const eventsResponse = await fetch(`http://localhost:25480/proxy/d2l/api/le/1.75/content/myItems/due/?orgUnitIdsCSV=${list}`, {
                     method: "GET",
                     credentials: "include",
                     headers: {
@@ -988,7 +984,7 @@ a:hover {
 
         async function foodFinder(query) {
             try {
-                const response = await fetch('http://xennick.com:25480/food', {
+                const response = await fetch('http://localhost:25480/food', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1264,7 +1260,7 @@ a:hover {
 
         async function updateGreetingText() {
             try {
-                const response = await fetch('http://xennick.com:25480/proxy/d2l/api/lp/1.32/users/whoami', {
+                const response = await fetch('http://localhost:25480/proxy/d2l/api/lp/1.32/users/whoami', {
                     credentials: 'include'
                 });
                 if (!response.ok) throw new Error('Failed to fetch user info');
@@ -1306,7 +1302,6 @@ a:hover {
             await refreshEvents();
             
             // Load crime map if available
-            loadCrimeMap();
         });
 
 
@@ -1374,7 +1369,7 @@ let currentUserId = null;
 
         async function loadUserInfo() {
             try {
-                const response = await fetch('http://xennick.com:25480/proxy/d2l/api/lp/1.32/users/whoami');
+                const response = await fetch('http://localhost:25480/proxy/d2l/api/lp/1.32/users/whoami');
                 if (!response.ok) throw new Error(`Failed to fetch user info: ${response.status}`);
                 const userData = await response.json();
                 currentUserId = userData.Identifier;
